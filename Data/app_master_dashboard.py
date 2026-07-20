@@ -71,23 +71,45 @@ if df_global is None or df_global.empty:
     st.stop()
 
 # ================================================================================
-# 3. DÉTERMINATION DYNAMIQUE DU THÈME EN PREMIER (POUR LE CSS DE LA SIDEBAR)
+# 3. INTERFACE LATÉRALE (SIDEBAR) & FILTRES
 # ================================================================================
-# On utilise un conteneur temporaire pour récupérer le choix avant d'injecter le gros bloc CSS
-if "template_key" not in st.session_state:
-    st.session_state.template_key = "Corporate Gold (Epure & Institutionnel)"
+st.sidebar.markdown("### Cadre du Projet d'Ingenierie")
+st.sidebar.markdown("""
+**PROJET DE FIN D'ANNÉE**  
+*Ateliers de Cuisson — OCP Jorf Lasfar*
 
-# Détection et assignation des variables de couleurs
+**Realise par :**  
+*   **Sara El Masmoudy**  
+*   **Mohamed Gorfti**  
+
+**Encadre par :**  
+*   **M. Akram Malyadi**  
+
+*Etablissement : ENSAM Meknes*  
+---
+""")
+
+st.sidebar.markdown("### Configuration Visuelle")
 template_choisi = st.sidebar.selectbox(
     "Theme de l'interface :",
     options=[
         "Corporate Gold (Epure & Institutionnel)",
         "SCADA Cyber Industrial (Sombre & Haute Technologie)",
         "Steel & Mint Eco-Cuisson (Metallique & Moderne)"
-    ],
-    key="template_select"
+    ]
 )
 
+st.sidebar.markdown("### Perimetre d'Analyse")
+scope_marche = st.sidebar.selectbox(
+    "Echelle des donnees :",
+    options=["Vue Consolidee (Usine Globale)"] + onglets_sous_tab
+)
+
+df_active = df_global if scope_marche == "Vue Consolidee (Usine Globale)" else dict_blocs[scope_marche]
+
+# ================================================================================
+# 4. CONFIGURATION ET HARMONISATION DES ADAPTATIONS COULEURS (SIDEBAR INCLUSE)
+# ================================================================================
 if "Corporate Gold" in template_choisi:
     injecter_image_fond("backgroud1")
     theme_plotly = "plotly_white"
@@ -95,8 +117,8 @@ if "Corporate Gold" in template_choisi:
     color_accent = "#D4AF37"    
     color_bg_card = "rgba(255, 255, 255, 0.96)"   
     color_text = "#1A252C" 
-    color_sidebar_bg = "#F8F9FA"  # Fond clair d'origine
-    color_sidebar_text = "#1A252C" # Texte sombre
+    color_sidebar_bg = "rgba(248, 249, 250, 0.96)" # Fond clair pour la sidebar
+    color_sidebar_text = "#1A252C"
     seq_couleurs = ['#1E4620', '#D4AF37', '#2C3E50']
     banner_style = "background: linear-gradient(135deg, #1E4620 0%, #2C3E50 100%); color: white;"
     chart_paper_bg = "rgba(255, 255, 255, 0.94)"
@@ -109,8 +131,8 @@ elif "SCADA Cyber Industrial" in template_choisi:
     color_accent = "#FF0055"    
     color_bg_card = "rgba(15, 23, 42, 0.94)"   
     color_text = "#FFFFFF" 
-    color_sidebar_bg = "#0F172A"  # 🛠️ Fond Bleu nuit/Sombre ultra-opaque pour briser le blanc
-    color_sidebar_text = "#FFFFFF" # 🛠️ Force les écritures en blanc pur
+    color_sidebar_bg = "rgba(15, 23, 42, 0.96)" # 🛠️ Fond sombre pour la barre à gauche
+    color_sidebar_text = "#FFFFFF"               # 🛠️ Texte blanc pour un contraste maximal
     seq_couleurs = ['#00F0FF', '#FF0055', '#9333EA']
     banner_style = "background: #0F172A; border: 2px solid #00F0FF; color: #00F0FF;"
     chart_paper_bg = "rgba(30, 41, 59, 0.94)"
@@ -123,48 +145,49 @@ else:
     color_accent = "#EA580C"    
     color_bg_card = "rgba(248, 250, 252, 0.96)"   
     color_text = "#0F172A"
-    color_sidebar_bg = "#F1F5F9" 
+    color_sidebar_bg = "rgba(241, 245, 249, 0.96)" 
     color_sidebar_text = "#0F172A"
     seq_couleurs = ['#059669', '#EA580C', '#475569']
     banner_style = "background: linear-gradient(135deg, #475569 0%, #059669 100%); color: white;"
     chart_paper_bg = "rgba(255, 255, 255, 0.94)"
     chart_plot_bg = "rgba(241, 245, 249, 0.6)"
 
-# ================================================================================
-# 4. INJECTION CSS CORRECTIVE ABSOLUE (ZONES CENTRALES ET SIDEBAR)
-# ================================================================================
+# Injection CSS globale appliquée à la zone centrale ET à la sidebar
 st.markdown(f"""
     <style>
-    /* 1. Zone centrale principale */
+    /* Zone principale */
     html, body, [data-testid="stAppViewContainer"] {{
         color: {color_text} !important;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans serif !important;
     }}
-    .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, .main p, .main span, .main label, .main li {{
+    h1, h2, h3, h4, h5, h6, p, span, label, small, li {{
         color: {color_text} !important;
     }}
     
-    /* 2. 🛠️ ANCRAGE RADICAL SUR LA BARRE LATÉRALE (SIDEBAR NATIVE) */
-    section[data-testid="stSidebar"] {{
+    /* 🛠️ AJUSTEMENT TECHNIQUE FORCE SUR LA BARRE LATÉRALE (SIDEBAR) */
+    [data-testid="stSidebar"] {{
         background-color: {color_sidebar_bg} !important;
     }}
-    section[data-testid="stSidebar"] *, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, 
-    section[data-testid="stSidebar"] label, section[data-testid="stSidebar"] li, section[data-testid="stSidebar"] strong {{
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, 
+    [data-testid="stSidebar"] h4, [data-testid="stSidebar"] h5, [data-testid="stSidebar"] h6, 
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] li, [data-testid="stSidebar"] small, [data-testid="stSidebar"] strong {{
         color: {color_sidebar_text} !important;
     }}
     
-    /* Ciblage spécifique des menus déroulants (Selectbox) dans la Sidebar */
-    section[data-testid="stSidebar"] div[data-baseweb="select"] div {{
+    /* Harmonisation visuelle des listes de sélection de la sidebar */
+    [data-testid="stSidebar"] div[data-baseweb="select"] div {{
         color: {color_sidebar_text} !important;
     }}
     
-    /* 3. Onglets de Navigation */
+    /* Correction de la couleur des onglets de navigation (Tabs) */
     button[data-baseweb="tab"] p {{
         color: {color_text} !important;
         font-weight: 600 !important;
+        font-size: 14px !important;
     }}
     
-    /* 4. Éléments graphiques (Cartes) */
+    /* Style unifié des cartes d'information */
     .custom-card {{
         background-color: {color_bg_card} !important;
         padding: 20px;
@@ -174,9 +197,10 @@ st.markdown(f"""
         margin-bottom: 15px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }}
-    .custom-card-title {{ font-size: 11px; color: #64748B !important; font-weight: 600; text-transform: uppercase; }}
+    .custom-card-title {{ font-size: 11px; color: #64748B !important; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
     .custom-card-val {{ font-size: 24px; font-weight: 700; margin-top: 5px; }}
     
+    /* Panneau d'analyse de texte */
     .analysis-pane {{
         background-color: {color_bg_card} !important;
         padding: 22px;
@@ -189,34 +213,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ================================================================================
-# 5. CONTENU DE LA SIDEBAR (PLACEMENT DU BLOC NOMINATIF)
-# ================================================================================
-st.sidebar.markdown("### Cadre du Projet d'Ingenierie")
-st.sidebar.markdown("""
-**PROJET DE FIN D'ANNÉE**  
-*Ateliers de Cuisson — OCP Jorf Lasfar*
-
-**Realise par :**  
-*   Sara El Masmoudy  
-*   Mohamed Gorfti  
-
-**Encadre par :**  
-*   M. Akram Malyadi  
-
-*Etablissement : ENSAM Meknes*  
----
-""")
-
-st.sidebar.markdown("### Perimetre d'Analyse")
-scope_marche = st.sidebar.selectbox(
-    "Echelle des donnees :",
-    options=["Vue Consolidee (Usine Globale)"] + onglets_sous_tab
-)
-
-df_active = df_global if scope_marche == "Vue Consolidee (Usine Globale)" else dict_blocs[scope_marche]
-
-# ================================================================================
-# 6. EN-TÊTE ET LOGOS DE PAGE
+# 5. EN-TÊTE ET LOGOS
 # ================================================================================
 col_l1, col_titre_centre, col_l2 = st.columns([2, 5, 1.8])
 with col_l1:
@@ -235,7 +232,7 @@ with col_titre_centre:
 st.write("\n")
 
 # ================================================================================
-# 7. BANDEAU DES INDICATEURS DE RENDEMENT CUMULÉS
+# 6. BANDEAU DES INDICATEURS DE RENDEMENT CUMULÉS
 # ================================================================================
 calc_petcoke = df_active['Conso Petcoke (kg)'].sum()
 calc_fuel = df_active['Conso Fuel P1 (kg)'].sum() + df_active['Conso Fuel P2 (kg)'].sum()
@@ -253,13 +250,15 @@ with m4:
     st.markdown(f'<div class="custom-card" style="border-top-color:{color_accent} !important;"><div class="custom-card-title">Indice d\'Efficience Thermique</div><div class="custom-card-val" style="color:{color_accent} !important;">{ratio_indus:.2f} kg/t</div></div>', unsafe_allow_html=True)
 
 # ================================================================================
-# 8. STRUCTURE DE NAVIGATION TECHNIQUE INTER-DOMAINES
+# 7. STRUCTURE DE NAVIGATION TECHNIQUE INTER-DOMAINES
 # ================================================================================
 st.write("---")
 st.markdown("### Navigation Metier Inter-Domaines")
 domaine_actif = st.tabs(["1. Pilotage Managerial & Performance", "2. Ingenierie Procede & Boucles DCS", "3. Logistique Matieres & Cinetique Silos"])
 
-# --- DOMAINE 1 : PILOTAGE MANAGÉRIAL ---
+# --------------------------------------------------------------------------------
+# DOMAINE 1 : PILOTAGE MANAGÉRIAL
+# --------------------------------------------------------------------------------
 with domaine_actif[0]:
     st.write("\n")
     c_graph1, c_text1 = st.columns([3, 1])
@@ -293,7 +292,9 @@ with domaine_actif[0]:
         </div>
         """, unsafe_allow_html=True)
 
-# --- DOMAINE 2 : INGENIERIE PROCÉDÉ ---
+# --------------------------------------------------------------------------------
+# DOMAINE 2 : INGENIERIE PROCÉDÉ
+# --------------------------------------------------------------------------------
 with domaine_actif[1]:
     st.write("\n")
     g_scada1, g_scada2 = st.columns(2)
@@ -325,7 +326,9 @@ with domaine_actif[1]:
         )
         st.plotly_chart(fig_double, use_container_width=True)
 
-# --- DOMAINE 3 : LOGISTIQUE MATIÈRES ---
+# --------------------------------------------------------------------------------
+# DOMAINE 3 : LOGISTIQUE MATIÈRES
+# --------------------------------------------------------------------------------
 with domaine_actif[2]:
     st.write("\n")
     c_silo_graph, c_silo_data = st.columns([2, 1])
