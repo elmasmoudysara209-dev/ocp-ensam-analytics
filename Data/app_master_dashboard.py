@@ -8,26 +8,43 @@ import base64
 # 1. CONFIGURATION DE LA PAGE
 st.set_page_config(page_title="OCP Jorf Lasfar - Performance Energetique", layout="wide")
 
-# Fonction pour encoder et injecter les images de fond (Backgrounds) de manière sécurisée
+# Fonction robuste pour injecter les images de fond (Backgrounds)
 def injecter_image_fond(nom_base_fichier):
-    # Gestion automatique des extensions courantes (.png ou .jpg)
-    for ext in ['.png', '.jpg', '.jpeg']:
-        chemin_complet = f"Assets/{nom_base_fichier}{ext}"
-        if os.path.exists(chemin_complet):
-            with open(chemin_complet, "rb") as image_file:
-                encoded = base64.b64encode(image_file.read()).decode()
-            st.markdown(f"""
-                <style>
-                .stApp {{
-                    background-image: url("data:image/{ext[1:]};base64,{encoded}");
-                    background-size: cover;
-                    background-position: center;
-                    background-repeat: no-repeat;
-                    background-attachment: fixed;
-                }}
-                </style>
-            """, unsafe_allow_html=True)
+    # Gestion de la double orthographe possible (backgroud ou background) et des extensions
+    variantes = [nom_base_fichier, nom_base_fichier.replace("backgroud", "background")]
+    trouve = False
+    
+    for var in variantes:
+        for ext in ['.png', '.jpg', '.jpeg']:
+            chemin_complet = f"Assets/{var}{ext}"
+            if os.path.exists(chemin_complet):
+                with open(chemin_complet, "rb") as image_file:
+                    encoded = base64.b64encode(image_file.read()).decode()
+                
+                # Injection CSS corrective avec forçage de transparence
+                st.markdown(f"""
+                    <style>
+                    [data-testid="stAppViewContainer"], .stApp {{
+                        background-image: url("data:image/{ext[1:]};base64,{encoded}") !important;
+                        background-size: cover !important;
+                        background-position: center !important;
+                        background-repeat: no-repeat !important;
+                        background-attachment: fixed !important;
+                    }}
+                    /* Rendre transparents les blocs parents pour laisser apparaître le fond */
+                    [data-testid="stHeader"], [data-testid="stAppViewBlockContainer"], .main {{
+                        background-color: transparent !important;
+                    }}
+                    </style>
+                """, unsafe_allow_html=True)
+                trouve = True
+                break
+        if trouve:
             break
+            
+    # Alerte en cas de fichier introuvable dans le dossier local
+    if not trouve:
+        st.sidebar.warning(f"Fichier '{nom_base_fichier}' (.png/.jpg) introuvable dans le dossier Assets/")
 
 # 2. MOTEUR DE CHARGEMENT DES DONNÉES (V2 ACCÈS MULTI-ONGLETS)
 @st.cache_data
@@ -63,7 +80,6 @@ if df_global is None or df_global.empty:
 # ================================================================================
 st.sidebar.markdown("### Cadre du Projet d'Ingenierie")
 
-# Cartouche nominatif académique et industriel épuré
 st.sidebar.markdown("""
 **PROJET DE FIN D'ANNÉE**  
 *Ateliers de Cuisson — OCP Jorf Lasfar*
@@ -105,7 +121,7 @@ if "Corporate Gold" in template_choisi:
     theme_plotly = "plotly_white"
     color_main = "#1E4620"      
     color_accent = "#D4AF37"    
-    color_bg_card = "rgba(248, 249, 250, 0.90)"   
+    color_bg_card = "rgba(255, 255, 255, 0.92)"   
     color_text = "#2C3E50"
     seq_couleurs = ['#1E4620', '#D4AF37', '#2C3E50']
     banner_style = "background: linear-gradient(135deg, #1E4620 0%, #2C3E50 100%); color: white;"
@@ -115,7 +131,7 @@ elif "SCADA Cyber Industrial" in template_choisi:
     theme_plotly = "plotly_dark"
     color_main = "#00F0FF"      
     color_accent = "#FF0055"    
-    color_bg_card = "rgba(17, 24, 39, 0.90)"   
+    color_bg_card = "rgba(17, 24, 39, 0.85)"   
     color_text = "#E5E7EB"
     seq_couleurs = ['#00F0FF', '#FF0055', '#9333EA']
     banner_style = "background: #111827; border: 2px solid #00F0FF; color: #00F0FF;"
@@ -125,37 +141,36 @@ else:
     theme_plotly = "ggplot2"
     color_main = "#059669"      
     color_accent = "#EA580C"    
-    color_bg_card = "rgba(241, 245, 249, 0.90)"   
+    color_bg_card = "rgba(241, 245, 249, 0.92)"   
     color_text = "#0F172A"
     seq_couleurs = ['#059669', '#EA580C', '#475569']
     banner_style = "background: linear-gradient(135deg, #475569 0%, #059669 100%); color: white;"
 
-# Style CSS local stable pour les boîtes d'affichage des KPIs
+# Application du style CSS transparent et lisible sur les tuiles KPIs
 st.markdown(f"""
     <style>
     .custom-card {{
-        background-color: {color_bg_card};
+        background-color: {color_bg_card} !important;
         padding: 20px;
         border-radius: 6px;
         text-align: center;
-        border-top: 4px solid {color_main};
+        border-top: 4px solid {color_main} !important;
         margin-bottom: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.08);
     }}
-    .custom-card-title {{ font-size: 11px; color: #7F8C8D; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
+    .custom-card-title {{ font-size: 11px; color: #555555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
     .custom-card-val {{ font-size: 24px; color: {color_text}; font-weight: 700; margin-top: 5px; }}
     </style>
 """, unsafe_allow_html=True)
 
 # ================================================================================
-# 5. EN-TÊTE ET LOGOS AJUSTÉS (PROPORTIONS OPTIMALES)
+# 5. EN-TÊTE ET LOGOS AJUSTÉS
 # ================================================================================
-# Augmentation de la colonne de gauche [2, 5, 1.8] pour équilibrer le logo ENSAM qui est plus large
 col_l1, col_titre_centre, col_l2 = st.columns([2, 5, 1.8])
 
 with col_l1:
     if os.path.exists("Assets/logo_ensam.png"): 
-        st.image("Assets/logo_ensam.png", width=190) # Largeur augmentée pour une parfaite visibilité
+        st.image("Assets/logo_ensam.png", width=190)
 
 with col_l2:
     if os.path.exists("Assets/logo_ocp.png"): 
@@ -172,7 +187,7 @@ with col_titre_centre:
 st.write("\n")
 
 # ================================================================================
-# 6. BANDEAU DE RENDEMENT MACRO-PROCÉDÉS (METRICS NATIFS DANS LES BLOCS)
+# 6. BANDEAU DE RENDEMENT MACRO-PROCÉDÉS
 # ================================================================================
 calc_petcoke = df_active['Conso Petcoke (kg)'].sum()
 calc_fuel = df_active['Conso Fuel P1 (kg)'].sum() + df_active['Conso Fuel P2 (kg)'].sum()
@@ -210,7 +225,7 @@ with domaine_actif[0]:
             labels={'value': 'Quantite thermique injectee', 'variable': 'Vecteur energetique'},
             color_discrete_sequence=seq_couleurs, template=theme_plotly
         )
-        fig_macro.update_layout(margin=dict(t=15, b=20, l=20, r=20), height=380)
+        fig_macro.update_layout(margin=dict(t=15, b=20, l=20, r=20), height=380, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_macro, use_container_width=True)
     
     with c_text1:
@@ -224,18 +239,17 @@ with domaine_actif[0]:
         st.metric("Total lignes traitees", len(df_active))
 
 # --------------------------------------------------------------------------------
-# DOMAINE 2 : INGENIERIE PROCÉDÉ (CORRECTION RADO DES CHEVAUCHEMENTS)
+# DOMAINE 2 : INGENIERIE PROCÉDÉ
 # --------------------------------------------------------------------------------
 with domaine_actif[1]:
     g_scada1, g_scada2 = st.columns(2)
     
     with g_scada1:
-        # Titre natif à l'extérieur du graphique pour éviter les collisions
         st.markdown("##### Suivi temporel de la Boucle de Cuisson (Consigne vs Retour)")
         fig_scada = go.Figure()
         fig_scada.add_trace(go.Scatter(x=df_active['Time'], y=df_active['Consigne injection petcock en t/h'], name="SP : Consigne (t/h)", line=dict(color=color_main, width=2.5)))
         fig_scada.add_trace(go.Scatter(x=df_active['Time'], y=df_active['Retour de consigne injection petcock en t/h'], name="PV : Retour (t/h)", line=dict(color=color_accent, dash='dash', width=1.5)))
-        fig_scada.update_layout(template=theme_plotly, margin=dict(t=20, b=20, l=20, r=20), height=350, legend=dict(orientation="h", y=1.12, x=0))
+        fig_scada.update_layout(template=theme_plotly, margin=dict(t=20, b=20, l=20, r=20), height=350, legend=dict(orientation="h", y=1.12, x=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_scada, use_container_width=True)
         
     with g_scada2:
@@ -248,7 +262,8 @@ with domaine_actif[1]:
             template=theme_plotly, height=350,
             margin=dict(t=20, b=20, l=20, r=20), legend=dict(orientation="h", y=1.12, x=0),
             yaxis=dict(title="Production Totale (t)"),
-            yaxis2=dict(title="Consommation Coke (kg)", overlaying="y", side="right", showgrid=False)
+            yaxis2=dict(title="Consommation Coke (kg)", overlaying="y", side="right", showgrid=False),
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)'
         )
         st.plotly_chart(fig_double, use_container_width=True)
 
@@ -265,7 +280,7 @@ with domaine_actif[2]:
             labels={'value': 'Quantite en stock (t)', 'variable': 'Affectation Silo'},
             color_discrete_sequence=[seq_couleurs[2], seq_couleurs[1]], template=theme_plotly
         )
-        fig_silo.update_layout(margin=dict(t=15, b=20, l=20, r=20), height=350, legend=dict(orientation="h", y=1.12, x=0))
+        fig_silo.update_layout(margin=dict(t=15, b=20, l=20, r=20), height=350, legend=dict(orientation="h", y=1.12, x=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_silo, use_container_width=True)
         
     with c_silo_data:
