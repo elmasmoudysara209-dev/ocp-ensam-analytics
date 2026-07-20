@@ -20,7 +20,8 @@ def load_master_data():
     dict_blocs = {}
     liste_dfs = []
     
-    for sheet in nom_onglets := onglets_sous_tab:
+    # LIGNE CORRIGÉE ICI : On supprime le ":=" inutile
+    for sheet in onglets_sous_tab:
         df_sheet = pd.read_excel(chemin_excel, sheet_name=sheet)
         df_sheet['Time'] = pd.to_datetime(df_sheet['Time'])
         df_sheet['Nom_Bloc'] = sheet
@@ -29,12 +30,6 @@ def load_master_data():
         
     df_global = pd.concat(liste_dfs, ignore_index=True) if liste_dfs else pd.DataFrame()
     return dict_blocs, df_global, onglets_sous_tab
-
-dict_blocs, df_global, onglets_sous_tab = load_master_data()
-
-if df_global is None or df_global.empty:
-    st.error("🚨 Le fichier 'Data/Donnees_Nettoyees_Calculs_Lignes_Final.xlsx' est introuvable ou vide. Veuillez vérifier son emplacement.")
-    st.stop()
 
 # ================================================================================
 # 3. INTERFACE LATÉRALE (SIDEBAR) : CONFIGURATION DU PROJET & DES CRÉDITS
