@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#1E4620"       # Vert OCP
+backgroundColor = "#FDFBF7"    # Blanc crème reposant
+secondaryBackgroundColor = "#F4F6F4" # Gris-vert très clair pour la sidebar
+textColor = "#2C3E50"          # Bleu ardoise foncé pour les textes
+font = "sans serif"
