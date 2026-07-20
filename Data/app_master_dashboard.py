@@ -7,21 +7,22 @@ import os
 # 1. CONFIGURATION DE LA PAGE
 st.set_page_config(page_title="OCP Jorf Lasfar - Master Dashboard", layout="wide", page_icon="🏭")
 
-# 2. MOTEUR DE CHARGEMENT DES DONNÉES (V2 FINALE MULTI-ONGLETS)
+# ================================================================================
+# MOTEUR DE CHARGEMENT DES DONNÉES (CORRIGÉ & SÉCURISÉ)
+# ================================================================================
 @st.cache_data
 def load_master_data():
     chemin_excel = 'Data/Donnees_Nettoyees_Calculs_Lignes_Final.xlsx'
     if not os.path.exists(chemin_excel):
-        return None, None, []
+        return {}, pd.DataFrame(), []
         
     xls = pd.ExcelFile(chemin_excel)
-    onglets_sous_tab = [sheet for sheet in xls.sheet_names if "Sous-Tableau" in sheet]
+    onglets = [sheet for sheet in xls.sheet_names if "Sous-Tableau" in sheet]
     
     dict_blocs = {}
     liste_dfs = []
     
-    # LIGNE CORRIGÉE ICI : On supprime le ":=" inutile
-    for sheet in onglets_sous_tab:
+    for sheet in onglets:
         df_sheet = pd.read_excel(chemin_excel, sheet_name=sheet)
         df_sheet['Time'] = pd.to_datetime(df_sheet['Time'])
         df_sheet['Nom_Bloc'] = sheet
@@ -29,7 +30,15 @@ def load_master_data():
         liste_dfs.append(df_sheet)
         
     df_global = pd.concat(liste_dfs, ignore_index=True) if liste_dfs else pd.DataFrame()
-    return dict_blocs, df_global, onglets_sous_tab
+    return dict_blocs, df_global, onglets
+
+# ⚠️ LA LIGNE CLÉ CRUCIALE ICI : On s'assure d'assigner explicitement les 3 variables globales
+dict_blocs, df_global, onglets_sous_tab = load_master_data()
+
+# Sécurité si le fichier Excel v2 n'est pas trouvé
+if df_global is None or df_global.empty:
+    st.error("🚨 Le fichier Excel est introuvable dans 'Data/'. Veuillez vérifier son emplacement.")
+    st.stop()
 
 # ================================================================================
 # 3. INTERFACE LATÉRALE (SIDEBAR) : CONFIGURATION DU PROJET & DES CRÉDITS
